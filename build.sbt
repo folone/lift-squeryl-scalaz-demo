@@ -1,4 +1,4 @@
-organization := "com.agynamix"
+organization := "sk.softwave"
 
 name := "LiftBasic"
 
@@ -12,29 +12,38 @@ seq(webSettings :_*)
 
 resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
 
-resolvers += "Lift Snapshots" at "http://scala-tools.org/repo-snapshots/"
+resolvers += "Scala Tools Releases" at "http://scala-tools.org/repo-releases/"
+
+resolvers += "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
+
+// necessary for gData-calendar
+resolvers += "Mandubian Mvn" at "http://mandubian-mvn.googlecode.com/svn/trunk/mandubian-mvn/repository" 
 
 libraryDependencies ++= {
     val liftVersion = "2.4-M4"
     Seq(
-    "net.liftweb" %% "lift-webkit" % liftVersion % "compile->default",
-    "net.liftweb" %% "lift-mapper" % liftVersion % "compile->default",
-    "net.liftweb" %% "lift-wizard" % liftVersion % "compile->default")
+    "net.liftweb" %% "lift-squeryl-record" % liftVersion % "compile->default",
+    "net.liftweb" %% "lift-widgets" % liftVersion % "compile->default")
   }
 
-// "org.mortbay.jetty" % "jetty" % "6.1.22" % "jetty,test", // For Jetty 6, add scope test to make jetty avl. for tests
-
 libraryDependencies ++= Seq(
-  "org.eclipse.jetty" % "jetty-webapp" % "7.3.0.v20110203" % "jetty,test", // For Jetty 7
-  "junit" % "junit" % "4.5" % "test->default",
   "javax.servlet" % "servlet-api" % "2.5" % "provided->default",
-  "com.h2database" % "h2" % "1.2.138",
-  "ch.qos.logback" % "logback-classic" % "0.9.26" % "compile->default"
+  "com.novocode" % "junit-interface" % "0.7" % "test->default", //sbt's JUnit4 test interface
+  "org.scala-tools.testing" %% "specs" % "1.6.9" % "test->default", 
+  //"org.eclipse.jetty" % "jetty-webapp" % "7.3.0.v20110203" % "container,test", // For Jetty 7
+  "org.mortbay.jetty" % "jetty" % "6.1.25" % "container,test", // For Jetty 6
+  "mysql" % "mysql-connector-java" % "5.1.15" % "compile->default",
+  "ch.qos.logback" % "logback-classic" % "0.9.27" % "compile->default",
+  "commons-io" % "commons-io" % "1.3.2" % "compile->default",
+  "org.apache.lucene" % "lucene-core" % "3.2.0" % "compile->default",
+  "org.apache.lucene" % "lucene-highlighter" % "3.2.0" % "compile->default",
+  "net.tanesha.recaptcha4j" % "recaptcha4j" % "0.0.7" % "compile->default",
+  "com.google.gdata" % "gdata-calendar-2.0" % "1.41.5" % "compile->default",
+  "org.mindrot" % "jbcrypt" % "0.3m" % "compile->default",
+  "org.apache.poi" % "poi" % "3.7" % "compile->default",
+  "com.jolbox" % "bonecp" % "0.7.1.RELEASE" % "compile->default"
 )
 
-// jettyClasspaths <<= (jettyClasspaths, sourceDirectory).map((j, src) => j.copy(classpath = j.classpath +++ src / "development" / "resources"))
 
 // If using JRebel uncomment next line
-jettyScanDirs := Nil
-
-temporaryWarPath <<= (sourceDirectory in Compile)(_ / "webapp")
+scanDirectories in Compile := Nil
