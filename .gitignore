@@ -1,0 +1,9 @@
+.*
+!.gitignore
+*~
+target
+project/project/
+project/target/
+profileOfH2Tests.html
+*.h2.db
+*.trace.db
