@@ -1,6 +1,6 @@
 Lift 2.4 and SBT 0.11 Basic Example Template
 
-> git clone git@github.com:rusho/lift_24_sbt11_basic.git
+> git clone git@github.com:folone/lift-squeryl-scalaz-demo.git
 > cd lift_24_sbt11_basic
 > sbt
 > ~container:start
