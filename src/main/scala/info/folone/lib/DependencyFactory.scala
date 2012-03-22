@@ -1,4 +1,4 @@
-package code
+package info.folone
 package lib
 
 import net.liftweb._

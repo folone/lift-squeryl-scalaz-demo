@@ -7,13 +7,12 @@ import common._
 import http._
 import sitemap._
 import Loc._
-import code.model._
+import info.folone.model._
 import squerylrecord.SquerylRecord
 import org.squeryl.Session
 import java.sql.DriverManager
 import org.squeryl.adapters.H2Adapter
 import net.liftweb.squerylrecord.RecordTypeMode._
-import code.model.MySchema
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -22,20 +21,20 @@ import code.model.MySchema
 class Boot {
   def boot {
     Class.forName("org.h2.Driver")
-    
-    SquerylRecord.initWithSquerylSession({
-    	val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:dbname;DB_CLOSE_DELAY=-1", "sa", ""), new H2Adapter)
-    	session.setLogger(sql => Logger("SqlLog:").debug(sql))
-    	session
-    	})  
 
-    transaction { 
+    SquerylRecord.initWithSquerylSession({
+      val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:dbname;DB_CLOSE_DELAY=-1", "sa", ""), new H2Adapter)
+      session.setLogger(sql => Logger("SqlLog:").debug(sql))
+      session
+    })
+
+    transaction {
       MySchema.printDdl
       MySchema.create
     }
 
     // where to search snippet
-    LiftRules.addToPackages("code")
+    LiftRules.addToPackages("info.folone")
 
     // Build SiteMap
     def sitemap = SiteMap(
@@ -43,14 +42,14 @@ class Boot {
 
       // more complex because this menu allows anything in the
       // /static path to be visible
-      Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
-	       "Static Content")))
+      Menu(Loc("Static", Link(List("static"), true, "/static/index"),
+        "Static Content")))
 
     //def sitemapMutators = User.sitemapMutator
 
     // set the sitemap.  Note if you don't want access control for
     // each page, just comment this line out.
-    LiftRules.setSiteMapFunc(() => sitemap/*sitemapMutators(sitemap)*/)
+    LiftRules.setSiteMapFunc(() => sitemap /*sitemapMutators(sitemap)*/ )
 
     // Use jQuery 1.4
     LiftRules.jsArtifacts = net.liftweb.http.js.jquery.JQuery14Artifacts
@@ -58,7 +57,7 @@ class Boot {
     //Show the spinny image when an Ajax call starts
     LiftRules.ajaxStart =
       Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
-    
+
     // Make the spinny image go away when it ends
     LiftRules.ajaxEnd =
       Full(() => LiftRules.jsArtifacts.hide("ajax-loader").cmd)
@@ -71,15 +70,14 @@ class Boot {
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) =>
-      new Html5Properties(r.userAgent))    
+      new Html5Properties(r.userAgent))
 
     // Make a transaction span the whole HTTP request
-    S.addAround(new LoanWrapper
-    {
-    	override def apply[T](f: => T): T = 
-    	{
-    		inTransaction{ f }
-    	}
+    S.addAround(new LoanWrapper {
+      override def apply[T](f: => T): T =
+        {
+          inTransaction { f }
+        }
     })
   }
 }

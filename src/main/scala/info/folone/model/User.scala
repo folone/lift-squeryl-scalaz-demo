@@ -1,4 +1,4 @@
-package code.model
+package info.folone.model
 
 import org.squeryl.annotations.Column
 import net.liftweb.record.field._

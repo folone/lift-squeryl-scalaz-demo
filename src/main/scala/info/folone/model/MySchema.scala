@@ -1,4 +1,4 @@
-package code.model
+package info.folone.model
 
 import org.squeryl.Schema
 import net.liftweb.squerylrecord.RecordTypeMode._
