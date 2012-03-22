@@ -4,4 +4,4 @@ Lift 2.4 and SBT 0.11 Basic Example Template
 > cd lift-squeryl-scalaz-demo
 > mvn jetty:run
 
-Your webapp is running on http://localhost:8000
+Your webapp is running on http://localhost:8080
