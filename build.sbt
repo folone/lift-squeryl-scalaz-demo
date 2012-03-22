@@ -1,6 +1,6 @@
-organization := "sk.softwave"
+organization := "info.folone"
 
-name := "LiftBasic"
+name := "Scalaz Demo"
 
 version := "0.1"
 
