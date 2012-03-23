@@ -33,14 +33,12 @@ package info.folone {
         "name=uname"  #> SHtml.text(email, email = _)  &
         "name=pwd"    #> SHtml.password(pass, pass = _) &
         "type=submit" #> SHtml.onSubmit { _ =>
-          val validateList =
-            stringEmpty_?("email")(email)   ::
-            stringEmpty_?("password")(pass) :: Nil
+          // Applicative
+          val validationResult =
+            (stringEmpty_?("email")(email) |@| stringEmpty_?("password")(pass)) { _ + " " + _ }
 
-          val validationResult = validateList.map { _.liftFailNel }
-                     .sequence[({type λ[α] = ValidationNEL[String, α]})#λ, String]
           validationResult match {
-              case Failure(x) => S.error("Not Logged in. " + x.shows)
+              case Failure(x) => S.error("Not Logged in. " + x)
               case _ => {
                 User.logIn(email, pass) ? S.redirectTo("/", () =>
                   S.notice("Successful.")) | S.error("Wrong email/password.")
@@ -62,6 +60,7 @@ package info.folone {
             phoneNumberCorrect_?(tel)             ::
             dateFormatCorrect_?(birthday)         ::
             stringsSame_?(("pass", "verifyPass"))((pass, verifyPass)) :: Nil
+          // Monad
           val validationResult = validateList.map { _.liftFailNel }
                      .sequence[({type λ[α] = ValidationNEL[String, α]})#λ, String]
           validationResult match {
