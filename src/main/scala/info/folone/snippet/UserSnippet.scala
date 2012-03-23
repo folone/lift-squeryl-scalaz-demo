@@ -34,18 +34,17 @@ package info.folone {
         "name=pwd"    #> SHtml.password(pass, pass = _) &
         "type=submit" #> SHtml.onSubmit { _ ⇒
           // Applicative
-          val validationResult =
+          /*val validationResult =
             (stringEmpty_?("email")(email)   |@|
              stringEmpty_?("password")(pass) |@|
              emailCorrect_?(email))          { _ + " " + _ + " " + _ }
 
           validationResult match {
               case Failure(x) ⇒ S.error("Not Logged in. " + x)
-              case _ ⇒ {
+              case _ ⇒*/
                 User.logIn(email, pass) ? S.redirectTo("/", () ⇒
                   S.notice("Successful.")) | S.error("Wrong email/password.")
-              }
-          }
+          //}
         }
       }
 
@@ -53,7 +52,7 @@ package info.folone {
       def register: CssSel = {
         bindVars & "#cancel_button" #> SHtml.onSubmit(_ ⇒ S.redirectTo("/")) &
                    "#signup_button" #> SHtml.onSubmit(_ ⇒ {
-          val validateList =
+          /*val validateList =
             stringEmpty_?("email")(email)         ::
             emailCorrect_?(email)                 ::
             stringEmpty_?("Firstname")(firstname) ::
@@ -68,7 +67,7 @@ package info.folone {
                      .sequence[({type λ[α] = ValidationNEL[String, α]})#λ, String]
           validationResult match {
               case Failure(x) ⇒ S.error("User not created. " + x.shows)
-              case _ ⇒ {
+              case _ ⇒ {*/
                 val bday = Calendar.getInstance
                 bday.setTime(formatter.parse(birthday))
                 val res = User.register(email=email, password=pass, 
@@ -77,8 +76,8 @@ package info.folone {
                                         zip=zip, country=country, tel=tel, birthday=bday)
                 S.redirectTo("/", () ⇒
                   S.notice("Successful."))
-              }
-          }
+             /* }
+          }*/
         })
       }
 
