@@ -30,9 +30,9 @@ package info.folone {
       def login: CssSel = {
         var uchargepass = ""
         var pass  = ""
-        "name=uname"  #> SHtml.text(email, email = _)  &
+        "name=uname"  #> SHtml.text(email, email = _)   &
         "name=pwd"    #> SHtml.password(pass, pass = _) &
-        "type=submit" #> SHtml.onSubmit { _ =>
+        "type=submit" #> SHtml.onSubmit { _ ⇒
           // Applicative
           val validationResult =
             (stringEmpty_?("email")(email)   |@|
@@ -40,9 +40,9 @@ package info.folone {
              emailCorrect_?(email))          { _ + " " + _ + " " + _ }
 
           validationResult match {
-              case Failure(x) => S.error("Not Logged in. " + x)
-              case _ => {
-                User.logIn(email, pass) ? S.redirectTo("/", () =>
+              case Failure(x) ⇒ S.error("Not Logged in. " + x)
+              case _ ⇒ {
+                User.logIn(email, pass) ? S.redirectTo("/", () ⇒
                   S.notice("Successful.")) | S.error("Wrong email/password.")
               }
           }
@@ -51,8 +51,8 @@ package info.folone {
 
 
       def register: CssSel = {
-        bindVars & "#cancel_button" #> SHtml.onSubmit(_ => S.redirectTo("/")) &
-                   "#signup_button" #> SHtml.onSubmit(_ => {
+        bindVars & "#cancel_button" #> SHtml.onSubmit(_ ⇒ S.redirectTo("/")) &
+                   "#signup_button" #> SHtml.onSubmit(_ ⇒ {
           val validateList =
             stringEmpty_?("email")(email)         ::
             emailCorrect_?(email)                 ::
@@ -67,15 +67,15 @@ package info.folone {
           val validationResult = validateList.map { _.liftFailNel }
                      .sequence[({type λ[α] = ValidationNEL[String, α]})#λ, String]
           validationResult match {
-              case Failure(x) => S.error("User not created. " + x.shows)
-              case _ => {
+              case Failure(x) ⇒ S.error("User not created. " + x.shows)
+              case _ ⇒ {
                 val bday = Calendar.getInstance
                 bday.setTime(formatter.parse(birthday))
                 val res = User.register(email=email, password=pass, 
                                         firstname=firstname, lastname=lastname,
                                         sex=sex, address=address,
                                         zip=zip, country=country, tel=tel, birthday=bday)
-                S.redirectTo("/", () =>
+                S.redirectTo("/", () ⇒
                   S.notice("Successful."))
               }
           }
@@ -85,7 +85,7 @@ package info.folone {
     // -- Common bind stuff
     private def bindVars = {
         val currentUser = User.currentUser
-        currentUser foreach { u =>
+        currentUser foreach { u ⇒
           email      = u.email.is
           firstname  = u.firstName.is
           lastname   = u.lastName.is
@@ -94,7 +94,7 @@ package info.folone {
           zip        = u.zip.is
           country    = u.country.is
           tel        = u.tel.is
-          u.birthday.is foreach { x => birthday = formatter.format(x.getTime) }
+          u.birthday.is foreach { x ⇒ birthday = formatter.format(x.getTime) }
         }
         if(!currentUser.isDefined)
           birthday = formatter.format(Calendar.getInstance.getTime)
@@ -107,8 +107,8 @@ package info.folone {
         "name=sex"        #> SHtml.select(("male", "male") :: ("female", "female") :: Nil,
                                           sex ? Full("female") | Full("male"),
                                           _ match {
-                                            case "male" => sex = false
-                                            case _      => sex = true
+                                            case "male" ⇒ sex = false
+                                            case _      ⇒ sex = true
                                           }) &
         "name=address"    #> SHtml.text(address, address = _)               &
         "name=zip"        #> SHtml.text(zip, zip = _)                       &
@@ -124,34 +124,35 @@ package info.folone {
     private val validationBelgiumNumber = """(([+]32)[ -_]*(\d{9}))""".r
     private val validationEmail = """(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b""".r
 
-    private def stringEmpty_? = (name: String) => (_:String).isEmpty ?
+    private def stringEmpty_? = (name: String) ⇒ (_:String).isEmpty ?
       (name + " should not be empty").fail[String] | (name + " ok").success[String]
 
-    private def stringsSame_? = (names: (String, String)) => (strings: (String, String)) =>
+    private def stringsSame_? = (names: (String, String)) ⇒ (strings: (String, String)) ⇒
       strings match {
-          case (a, b) if a === b => a.success[String]
-          case _ => names.mkString(" ").success[String]
+          case (a, b) if a === b ⇒ a.success[String]
+          case _                 ⇒
+            (names._1 + " and " + names._2 + " should be the same.").fail[String]
       }
 
-    private def phoneNumberCorrect_? = (number: String) =>
+    private def phoneNumberCorrect_? = (number: String) ⇒
       number match {
-        case validationNetherlandsNumber(_, _, _) if (country == "Netherlands") =>
+        case validationNetherlandsNumber(_, _, _) if (country == "Netherlands") ⇒
           number.success[String]
-        case validationBelgiumNumber(_, _, _) if (country == "Belgium") =>
+        case validationBelgiumNumber(_, _, _) if (country == "Belgium") ⇒
           number.success[String]
-        case _ =>
-          "Not the right phone number format. The correct format for Netherlands +31 123456789. or +32 for Belgium".fail[String]
+        case _ ⇒
+          "Not the right phone number format. The correct format for Netherlands is +31 123456789. or +32 for Belgium".fail[String]
       }
 
-    private def dateFormatCorrect_? = (date: String) => try {
+    private def dateFormatCorrect_? = (date: String) ⇒ try {
       formatter.parse(date)
       date.success[String]
-    } catch { case _ => "Birthday is of wrong format.".fail[String] }
+    } catch { case _ ⇒ "Birthday is of wrong format.".fail[String] }
 
-    private def emailCorrect_? = (email: String) =>
+    private def emailCorrect_? = (email: String) ⇒
       validationEmail findFirstIn email match {
-          case Some(email) => email.success[String]
-          case _           => "Not really an email.".fail[String]
+          case Some(email) ⇒ email.success[String]
+          case _           ⇒ "Not really an email.".fail[String]
       }
 
   }

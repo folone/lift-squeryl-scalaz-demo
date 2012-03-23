@@ -6,7 +6,7 @@ import net.liftweb.squerylrecord.RecordTypeMode._
 object MySchema extends Schema {
   val users = table[User]
 
-  on(users)(u =>
+  on(users)(u ⇒
     declare(u.email.~.is(unique)))
 
 }

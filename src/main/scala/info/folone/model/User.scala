@@ -81,12 +81,12 @@ object User extends User with MetaRecord[User] {
                    MySchema.users.insert(user)
                    Right(user)
                  } catch {
-                     case e =>
+                     case e ⇒
                        Left("Server error")
                  }
                }
 
-  def logInUser(user: User, doAfterLogin: () => Nothing): Nothing = {
+  def logInUser(user: User, doAfterLogin: () ⇒ Nothing): Nothing = {
       logInUser(user)
       doAfterLogin()
     }
@@ -107,7 +107,7 @@ object User extends User with MetaRecord[User] {
    * Checks username and password, if all is ok, logs user in and returns true, else returns false
    */
   def logIn(email: String, password: String): Boolean = {
-      getByEmail(email).map(user =>
+      getByEmail(email).map(user ⇒
         {
           if (user.password.match_?(password)) {
             logInUser(user)
@@ -138,12 +138,12 @@ object User extends User with MetaRecord[User] {
 
   object loginRedirect extends SessionVar[Box[String]](Empty)
 
-  def requireLogin = TestAccess(() => {
+  def requireLogin = TestAccess(() ⇒ {
       if (isLoggedIn)
         Empty
       else {
         val uri = S.uriAndQueryString
-        Full(RedirectWithState(loginPageURL, RedirectState(() => { loginRedirect.set(uri) })))
+        Full(RedirectWithState(loginPageURL, RedirectState(() ⇒ { loginRedirect.set(uri) })))
       }
     })
 
@@ -151,10 +151,10 @@ object User extends User with MetaRecord[User] {
     MySchema.users.lookup(userId)
 
   def getByEmail(email: String) =
-    MySchema.users.where(u => lower(u.email) === email.toLowerCase).headOption
+    MySchema.users.where(u ⇒ lower(u.email) === email.toLowerCase).headOption
 
   def getAllUsers: List[User] =
-    from(MySchema.users)(u => select(u)).toList
+    from(MySchema.users)(u ⇒ select(u)).toList
 
   /**
    * Checks if an email address exists.
@@ -164,18 +164,18 @@ object User extends User with MetaRecord[User] {
       if (email.length < 2)
         true
 
-      from(MySchema.users)(u => where(lower(u.email) === email.toLowerCase) compute (count)).toLong > 0
+      from(MySchema.users)(u ⇒ where(lower(u.email) === email.toLowerCase) compute (count)).toLong > 0
     }
 
   def currentUserFullName: String = {
       User.currentUser match {
-        case Full(user) => user.fullName
-        case _ => ""
+        case Full(user) ⇒ user.fullName
+        case _ ⇒ ""
       }
     }
 
   def getNumberOfUsers: Long =
-    from(MySchema.users)(u => compute(count)).toLong
+    from(MySchema.users)(u ⇒ compute(count)).toLong
 }
 
 object PasswordField {
@@ -189,7 +189,7 @@ trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String,
                                                            with PasswordTypedField {
 
   def mySalt = {
-      val myValue = valueBox.map(v => v.toString) openOr ""
+      val myValue = valueBox.map(v ⇒ v.toString) openOr ""
       if (myValue.isEmpty || myValue.length <= 28)
         salt.get
       else
@@ -202,7 +202,7 @@ trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String,
   	*/
   override def match_?(toTest: String): Boolean =
     valueBox.filter(_.length > 0)
-      .flatMap(p => tryo(BCrypt.checkpw(toTest, p)))
+      .flatMap(p ⇒ tryo(BCrypt.checkpw(toTest, p)))
       .openOr(false)
 
   override def set_!(in: Box[String]): Box[String] = {
@@ -212,7 +212,7 @@ trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String,
   }
 
   override def apply(in: Box[MyType]): OwnerType = {
-      val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
+      val hashed = in.map(s ⇒ PasswordField.hashpw(s) openOr s)
       super.apply(hashed)
     }
 }

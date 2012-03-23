@@ -35,15 +35,15 @@ object DependencyFactory extends Factory {
  */
 sealed abstract class Changer {
   def changeDefaultImplementation() {
-    DependencyFactory.time.default.set(() => new Date())
+    DependencyFactory.time.default.set(() ⇒ new Date())
   }
 
   def changeSessionImplementation() {
-    DependencyFactory.time.session.set(() => new Date())
+    DependencyFactory.time.session.set(() ⇒ new Date())
   }
 
   def changeRequestImplementation() {
-    DependencyFactory.time.request.set(() => new Date())
+    DependencyFactory.time.request.set(() ⇒ new Date())
   }
 
   def changeJustForCall(d: Date) {
