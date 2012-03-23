@@ -7,6 +7,6 @@ object MySchema extends Schema {
   val users = table[User]
 
   on(users)(u =>
-    declare(u.userName.~.is(unique)))
+    declare(u.email.~.is(unique)))
 
 }

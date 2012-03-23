@@ -1,4 +1,5 @@
-package info.folone.model
+package info.folone {
+  package model {
 
 import org.squeryl.annotations.Column
 import net.liftweb.record.field._
@@ -10,6 +11,7 @@ import net.liftweb.common.{ Box, Full, Empty }
 import net.liftweb.util.Helpers._
 import net.liftweb.sitemap.Loc._
 import org.mindrot.jbcrypt.BCrypt
+import java.util.Calendar
 
 class User private () extends Record[User] with KeyedRecord[Long] {
   def meta = User
@@ -17,30 +19,27 @@ class User private () extends Record[User] with KeyedRecord[Long] {
   @Column(name = "id")
   override val idField = new LongField(this)
 
-  val email = new EmailField(this, 50)
-  val userName = new StringField(this, 50)
-  val password = new PasswordField(this) with MyPasswordTypedField[User]
+  val email     = new EmailField(this, 50)
+  //val userName  = new StringField(this, 50)
+  val password  = new PasswordField(this) with MyPasswordTypedField[User]
   val firstName = new StringField(this, 50)
-  val lastName = new StringField(this, 50)
-  val superUser = new BooleanField(this)
-  val active = new IntField(this)
-  val created = new DateTimeField(this)
-  val updated = new DateTimeField(this)
+  val lastName  = new StringField(this, 50)
+  val created   = new DateTimeField(this)
+  val updated   = new DateTimeField(this)
 
-  val sex = new BooleanField(this, false) //male - 0, female - 1
-  val address = new StringField(this, 255)
-  val zip = new StringField(this, 10)
-  val city = new StringField(this, 100)
-  val tel = new StringField(this, 60)
+  val sex      = new BooleanField(this, false) //male - 0, female - 1
+  val address  = new StringField(this, 255)
+  val zip      = new StringField(this, 10)
+  val country  = new StringField(this, 100)
+  val tel      = new StringField(this, 60)
   val birthday = new OptionalDateTimeField(this)
 
   def fullName: String = lastName + " " + firstName
 
-  private def authorizationHashInput = email.is + userName.is + created.is + updated.is
+  private def authorizationHashInput = email.is /*+ userName.is*/ + created.is + updated.is
   def makeAuthorizationHash: String = makeAuthorizationHash(randomString(16))
   def makeAuthorizationHash(salt: String) = hash("{" + authorizationHashInput + "} salt={" + salt + "}") + salt
-  def validateAuthorizationHash(hash: String): Boolean =
-    {
+  def validateAuthorizationHash(hash: String): Boolean = {
       if (hash.isEmpty || hash.length <= 28)
         false
       else {
@@ -56,18 +55,43 @@ object User extends User with MetaRecord[User] {
 
   def currentUserId: Box[Long] = curUserId.is
 
-  private object curUser extends RequestVar[Box[User]](currentUserId.flatMap(get)) with CleanRequestVarOnSessionTransition
+  private object curUser extends RequestVar[Box[User]](currentUserId.flatMap(get))
+                         with CleanRequestVarOnSessionTransition
 
   def currentUser: Box[User] = curUser.is
 
-  def logInUser(user: User, doAfterLogin: () => Nothing): Nothing =
-    {
+  def register(email: String, password: String, firstname: String, lastname: String,
+               birthday: Calendar = Calendar.getInstance, created: Calendar =
+                 Calendar.getInstance,
+               updated: Calendar = Calendar.getInstance, sex: Boolean, country: String,
+               address: String, zip: String, tel: String) = {
+                 val user = createRecord.email(email)
+                                        .password(password)
+                                        .firstName(firstname)
+                                        .lastName(lastname)
+                                        .created(created)
+                                        .updated(updated)
+                                        .sex(sex)
+                                        .address(address)
+                                        .zip(zip)
+                                        .country(country)
+                                        .tel(tel)
+                                        .birthday(birthday)
+                 try {
+                   MySchema.users.insert(user)
+                   Right(user)
+                 } catch {
+                     case e =>
+                       Left("Server error")
+                 }
+               }
+
+  def logInUser(user: User, doAfterLogin: () => Nothing): Nothing = {
       logInUser(user)
       doAfterLogin()
     }
 
-  def logInUser(user: User) =
-    {
+  def logInUser(user: User) = {
       curUserId.remove
       curUser.remove
       curUserId(Full(user.id))
@@ -82,11 +106,10 @@ object User extends User with MetaRecord[User] {
   /**
    * Checks username and password, if all is ok, logs user in and returns true, else returns false
    */
-  def logIn(username: String, password: String): Boolean =
-    {
-      getByUserName(username).map(user =>
+  def logIn(email: String, password: String): Boolean = {
+      getByEmail(email).map(user =>
         {
-          if (user.password.match_?(password) && user.active.is > 0) {
+          if (user.password.match_?(password)) {
             logInUser(user)
             true
           } else
@@ -94,8 +117,7 @@ object User extends User with MetaRecord[User] {
         }) getOrElse false
     }
 
-  def logOut() =
-    {
+  def logOut() = {
       curUserId.remove
       curUser.remove
       S.session.foreach(_.destroySession)
@@ -106,14 +128,9 @@ object User extends User with MetaRecord[User] {
     S.redirectTo(S.uriAndQueryString openOr "/")
   }
 
-  def isLoggedIn: Boolean =
-    {
-      currentUserId.isDefined
-    }
+  def isLoggedIn: Boolean = currentUserId.isDefined
 
   def notLoggedIn: Boolean = !isLoggedIn
-
-  def isSuperUser: Boolean = currentUser.map(_.superUser.is) openOr false
 
   var adminLoginPageURL = "/admin/login"
 
@@ -121,8 +138,7 @@ object User extends User with MetaRecord[User] {
 
   object loginRedirect extends SessionVar[Box[String]](Empty)
 
-  def requireLogin = TestAccess(() =>
-    {
+  def requireLogin = TestAccess(() => {
       if (isLoggedIn)
         Empty
       else {
@@ -131,55 +147,27 @@ object User extends User with MetaRecord[User] {
       }
     })
 
-  def requireAdminLogin = TestAccess(() =>
-    {
-      if (isLoggedIn && isSuperUser)
-        Empty
-      else {
-        if (isLoggedIn)
-          S.error("You don't have administration rights!")
-        val uri = S.uriAndQueryString
-        Full(RedirectWithState(adminLoginPageURL, RedirectState(() => { loginRedirect.set(uri) })))
-      }
-    })
-
   def get(userId: Long): Option[User] =
     MySchema.users.lookup(userId)
 
-  def getByUserName(username: String): Option[User] =
-    {
-      MySchema.users.where(u => lower(u.userName) === username.toLowerCase).headOption
-    }
+  def getByEmail(email: String) =
+    MySchema.users.where(u => lower(u.email) === email.toLowerCase).headOption
 
   def getAllUsers: List[User] =
     from(MySchema.users)(u => select(u)).toList
 
   /**
-   * Checks if a user name exists.
-   * If username.length < 2, returns true (invalid username)
-   */
-  def userNameExists(username: String): Boolean =
-    {
-      if (username.length < 2)
-        true
-
-      from(MySchema.users)(u => where(lower(u.userName) === username.toLowerCase) compute (count)).toLong > 0
-    }
-
-  /**
    * Checks if an email address exists.
    * If email.length < 2, returns true (invalid email)
    */
-  def emailExists(email: String): Boolean =
-    {
+  def emailExists(email: String): Boolean = {
       if (email.length < 2)
         true
 
       from(MySchema.users)(u => where(lower(u.email) === email.toLowerCase) compute (count)).toLong > 0
     }
 
-  def currentUserFullName: String =
-    {
+  def currentUserFullName: String = {
       User.currentUser match {
         case Full(user) => user.fullName
         case _ => ""
@@ -196,10 +184,11 @@ object PasswordField {
 
   def hashpw(in: String): Box[String] = tryo(BCrypt.hashpw(in, BCrypt.gensalt(logRounds)))
 }
-trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String, OwnerType] with PasswordTypedField {
 
-  def mySalt =
-    {
+trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String, OwnerType]
+                                                           with PasswordTypedField {
+
+  def mySalt = {
       val myValue = valueBox.map(v => v.toString) openOr ""
       if (myValue.isEmpty || myValue.length <= 28)
         salt.get
@@ -222,9 +211,10 @@ trait MyPasswordTypedField[OwnerType <: Record[OwnerType]] extends Field[String,
     in
   }
 
-  override def apply(in: Box[MyType]): OwnerType =
-    {
+  override def apply(in: Box[MyType]): OwnerType = {
       val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
       super.apply(hashed)
     }
+}
+  }
 }

@@ -11,11 +11,6 @@
         <scala.version>2.9.1</scala.version>
         <akka.version>1.2</akka.version>
         <lift.version>2.4</lift.version>
-        <dispatch.version>0.8.5</dispatch.version>
-        <aspectj.version>1.6.12</aspectj.version>
-        <jelastic.username>y.klymko@thenewmotion.com</jelastic.username>
-        <jelastic.password>3LXgsQC083</jelastic.password>
-        <jelastic.plugin.version>1.5</jelastic.plugin.version>
         <log.level>DEBUG</log.level>
     </properties>
 
@@ -64,6 +59,11 @@
         <groupId>org.mindrot</groupId>
         <artifactId>jbcrypt</artifactId>
         <version>0.3m</version>
+      </dependency>
+      <dependency>
+        <groupId>org.scalaz</groupId>
+        <artifactId>scalaz-core_${scala.version}</artifactId>
+        <version>6.0.3</version>
       </dependency>
     </dependencies>
 
