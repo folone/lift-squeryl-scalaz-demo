@@ -35,7 +35,9 @@ package info.folone {
         "type=submit" #> SHtml.onSubmit { _ =>
           // Applicative
           val validationResult =
-            (stringEmpty_?("email")(email) |@| stringEmpty_?("password")(pass)) { _ + " " + _ }
+            (stringEmpty_?("email")(email)   |@|
+             stringEmpty_?("password")(pass) |@|
+             emailCorrect_?(email))          { _ + " " + _ + " " + _ }
 
           validationResult match {
               case Failure(x) => S.error("Not Logged in. " + x)
@@ -53,6 +55,7 @@ package info.folone {
                    "#signup_button" #> SHtml.onSubmit(_ => {
           val validateList =
             stringEmpty_?("email")(email)         ::
+            emailCorrect_?(email)                 ::
             stringEmpty_?("Firstname")(firstname) ::
             stringEmpty_?("Lastname")(lastname)   ::
             stringEmpty_?("zip")(zip)             ::
@@ -119,7 +122,7 @@ package info.folone {
     // -- Validation methods
     private val validationNetherlandsNumber = """(([+]31)[ -_]*(\d{9}))""".r
     private val validationBelgiumNumber = """(([+]32)[ -_]*(\d{9}))""".r
-    private val validationEmail = """(\w+)@([\w\.]+)""".r
+    private val validationEmail = """(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b""".r
 
     private def stringEmpty_? = (name: String) => (_:String).isEmpty ?
       (name + " should not be empty").fail[String] | (name + " ok").success[String]
@@ -145,12 +148,12 @@ package info.folone {
       date.success[String]
     } catch { case _ => "Birthday is of wrong format.".fail[String] }
 
-    private def validateFormData(toValidate: Map[String, String => Validation[String, String]]) = {
-      val res = toValidate map { case(str, fun) =>
-        fun(str).liftFailNel
+    private def emailCorrect_? = (email: String) =>
+      validationEmail findFirstIn email match {
+          case Some(email) => email.success[String]
+          case _           => "Not really an email.".fail[String]
       }
-      res.toList.sequence[({type λ[α] = ValidationNEL[String, α]})#λ, String]
-    }
+
   }
   }
 }
